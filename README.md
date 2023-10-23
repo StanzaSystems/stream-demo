@@ -1,7 +1,7 @@
 # Stanza Stream Balancer Demo
 
 This repo contains a self-service demo of a new experimental Stanza feature that lets users fairly balance concurrent access to 
-limited resources (such as streaming bandwidth, or even Lambda executions and so on).
+limited resources (such as streaming bandwidth, Lambda executions, and so on).
 
 The API is available here: [stream.proto](https://github.com/StanzaSystems/apis/blob/main/stanza/hub/v1/stream.proto).
 
