@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math"
 	"os"
 
 	pb "github.com/StanzaSystems/stream-demo/gen/go/stanza/hub/v1"
@@ -16,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 var (
@@ -58,6 +58,8 @@ The demo config in use is as follows:
 `)
 
 	// First, forget any existing streams created by previous runs of this demo
+	fmt.Printf("Start demo by clearing up any streams left over from previous runs.\n")
+
 	_, err = sendReq(nil, []string{"a-new-stream", "another-new-stream", "yet-another-new-stream", "cust-3-stream", "cust-4-stream", "cust-1-streamp0", "cust-1-streamp1", "cust-1-streamp2"}, client)
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
@@ -78,15 +80,13 @@ The demo config in use is as follows:
 		},
 	}
 
-	fmt.Printf("Next, we request one stream. We expect Stanza to permit 15 units of capacity for this stream, using the customer's allocated capacity: \n%+v\n", reqs)
-	res, err := sendReq(reqs, nil, client)
+	fmt.Printf("First, we request one stream. We expect Stanza to permit 15 units of capacity for this stream, using the customer's allocated capacity.\n")
+	_, err = sendReq(reqs, nil, client)
 
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Printf("Result: %+v\n\n", res)
 
 	// try allocate another stream to same customer - will split the 15 quota between them
 	reqs = []*pb.StreamRequest{
@@ -101,15 +101,13 @@ The demo config in use is as follows:
 				}},
 		},
 	}
-	fmt.Printf("Now, we request a second stream for the same customer. It should split the customer's quota between the two streams, so the existing stream is downsized: \n%+v\n", reqs)
-	res, err = sendReq(reqs, nil, client)
+	fmt.Printf("Now, we request a second stream for the same customer. It should split the customer's quota between the two streams, so the existing stream is downsized.\n")
+	_, err = sendReq(reqs, nil, client)
 
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Printf("Result: %+v\n\n", res)
 
 	// try allocate another stream to a new customer - will give 15 again
 	reqs = []*pb.StreamRequest{
@@ -124,15 +122,13 @@ The demo config in use is as follows:
 				}},
 		},
 	}
-	fmt.Printf("Attempt to allocate another stream for a different customer. It should be allocated 15 units of capacity: \n%+v\n", reqs)
-	res, err = sendReq(reqs, nil, client)
+	fmt.Printf("Attempt to allocate another stream for a different customer. It should be allocated 15 units of capacity.\n")
+	_, err = sendReq(reqs, nil, client)
 
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Printf("Result: %+v\n\n", res)
 
 	// add more streams for 2 further customers and hit the overall limit of 50 - every customer limited to 12.5 total
 	reqs = []*pb.StreamRequest{
@@ -158,25 +154,21 @@ The demo config in use is as follows:
 		},
 	}
 
-	fmt.Printf("Two more customers request streams. The system now has more requests than capacity, so some existing streams are downsized: \n%+v\n", reqs)
-	res, err = sendReq(reqs, nil, client)
+	fmt.Printf("Two more customers request streams. The system now has more requests than capacity, so some existing streams are downsized.\n")
+	_, err = sendReq(reqs, nil, client)
 
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Printf("Result: %+v\n\n", res)
 
 	// remove some streams and see some remaining streams upsized
-	res, err = sendReq(nil, []string{"another-new-stream", "cust-3-stream"}, client)
 	fmt.Printf("Removing some existing streams leaves more capacity for the rest, so they are upsized - removing \"another-new-stream\" and \"cust-3-stream\"\n")
+	_, err = sendReq(nil, []string{"another-new-stream", "cust-3-stream"}, client)
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Printf("Result: %+v\n\n", res)
 
 	// overload the quota for customer1 requests - it will prioritise the highest priority requests
 	reqs = []*pb.StreamRequest{
@@ -218,14 +210,13 @@ The demo config in use is as follows:
 		},
 	}
 
-	fmt.Printf("Finally, we request too many streams for customer1 - we cannot serve the minimum requested stream size for each stream. Stanza serves the two higher priority streams in this request, and continues to serve the existing stream a-new-stream:\n %+v \n", reqs)
+	fmt.Printf("Finally, we request too many streams for customer1 - we cannot serve the minimum requested stream size for each stream. Stanza serves the two higher priority streams in this request, and continues to serve the existing stream a-new-stream.\n")
 
-	res, err = sendReq(reqs, nil, client)
+	_, err = sendReq(reqs, nil, client)
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Result: %+v\n\n", res)
 }
 
 func sendReq(reqs []*pb.StreamRequest, rms []string, client pb.StreamBalancerServiceClient) (*pb.UpdateStreamsResponse, error) {
@@ -238,10 +229,9 @@ func sendReq(reqs []*pb.StreamRequest, rms []string, client pb.StreamBalancerSer
 		Requests:    reqs,
 		Ended:       rms,
 	}
-	return client.UpdateStreams(ctx, &req)
-}
+	fmt.Printf("Request: \n%s\n", prototext.Format(&req))
 
-func eq(b, a float32) bool {
-	diff := math.Abs(float64(b) - float64(a))
-	return diff < 0.01
+	res, err := client.UpdateStreams(ctx, &req)
+	fmt.Printf("Result: \n%s\n\n", prototext.Format(res))
+	return res, err
 }
