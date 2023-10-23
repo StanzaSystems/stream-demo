@@ -144,10 +144,10 @@ type StreamRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Feature       string `protobuf:"bytes,1,opt,name=feature,proto3" json:"feature,omitempty"`                                         // optional
-	Tags          []*Tag `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`                                               // optional
-	PriorityBoost *int32 `protobuf:"varint,3,opt,name=priority_boost,json=priorityBoost,proto3,oneof" json:"priority_boost,omitempty"` // optional
-	// Unique identifier for this stream - may be meaningful or a UUID.
+	Feature       string `protobuf:"bytes,1,opt,name=feature,proto3" json:"feature,omitempty"`                                         // optional - if specified then the request inherits the feature priority
+	Tags          []*Tag `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`                                               // refers to tags specified in the Guard configuration, used to fairly allocate quota
+	PriorityBoost *int32 `protobuf:"varint,3,opt,name=priority_boost,json=priorityBoost,proto3,oneof" json:"priority_boost,omitempty"` // optional - allows priority to be increased or reduced relative to normal default or feature priority.
+	// Unique identifier for this stream - may be meaningful or a UUID. Assigned by requestor.
 	StreamId string `protobuf:"bytes,4,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
 	// Maximum weight that may be allocated to this stream
 	MaxWeight float32 `protobuf:"fixed32,5,opt,name=max_weight,json=maxWeight,proto3" json:"max_weight,omitempty"`
@@ -234,7 +234,7 @@ type StreamResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Unique identifier for this stream - may be meaningful or a UUID.
+	// Unique identifier for this stream - as described in StreamRequest mesage.
 	StreamId string `protobuf:"bytes,1,opt,name=stream_id,json=streamId,proto3" json:"stream_id,omitempty"`
 	// Weight allocated to this stream. Zero means it was not allocated.
 	AllocatedWeight float32 `protobuf:"fixed32,2,opt,name=allocated_weight,json=allocatedWeight,proto3" json:"allocated_weight,omitempty"`
