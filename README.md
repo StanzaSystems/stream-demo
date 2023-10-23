@@ -7,7 +7,7 @@ The API is available here: [stream.proto](https://github.com/StanzaSystems/apis/
 
 The API allows you to request allocations for new Streams, and to indicate that existing Streams have completed.
 Each StreamRequest has a minimum and maximum desired quota. If the minimum quota cannot be met, then zero will be returned to indicate that the stream cannot be allocated.
-When quota is constrained (i.e. )
+When quota is constrained (i.e. when more is requested than can be served), Stanza will proportionally downweight every stream.
 
 If minimum quotas cannot be served, then Stanza will serve:
  * existing running streams
