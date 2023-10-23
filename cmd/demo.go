@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 
+	hubv1 "github.com/StanzaSystems/stream-demo/gen/go/stanza/hub/v1"
 	pb "github.com/StanzaSystems/stream-demo/gen/go/stanza/hub/v1"
 	"go.openly.dev/pointy"
 
@@ -16,6 +17,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 var (
@@ -78,15 +80,13 @@ The demo config in use is as follows:
 		},
 	}
 
-	fmt.Printf("Next, we request one stream. We expect Stanza to permit 15 units of capacity for this stream, using the customer's allocated capacity: \n%+v\n", reqs)
+	fmt.Printf("Next, we request one stream. We expect Stanza to permit 15 units of capacity for this stream, using the customer's allocated capacity")
 	res, err := sendReq(reqs, nil, client)
 
 	if err != nil {
 		fmt.Printf("Got error from stanza: %+v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Printf("Result: %+v\n\n", res)
 
 	// try allocate another stream to same customer - will split the 15 quota between them
 	reqs = []*pb.StreamRequest{
@@ -238,10 +238,18 @@ func sendReq(reqs []*pb.StreamRequest, rms []string, client pb.StreamBalancerSer
 		Requests:    reqs,
 		Ended:       rms,
 	}
-	return client.UpdateStreams(ctx, &req)
+	res, err := client.UpdateStreams(ctx, &req)
+	printResult(res)
+
+	return res, err
 }
 
 func eq(b, a float32) bool {
 	diff := math.Abs(float64(b) - float64(a))
 	return diff < 0.01
+}
+
+func printResult(res *hubv1.UpdateStreamsResponse) {
+	fmt.Printf("Result: \n%+v\n\n", prototext.Format(res))
+
 }
